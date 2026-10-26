@@ -111,6 +111,17 @@ KDE Plasma natively reserves 4-finger vertical swipes for *Overview* and *Deskto
 - If conflicts arise or you prefer preventing native handlers entirely, disable *Overview* / *Desktop Grid* in:
   **System Settings** ➔ **Window Management** ➔ **Desktop Effects** (you can still bind them to keyboard shortcuts).
 
+### 4. When are `udev` Rules Actually Required?
+The `/etc/udev/rules.d/71-touchpad.rules` (`TAG+="uaccess"`) rule is only necessary depending on which gesture types you configure:
+
+| Gesture Category | Needs `udev` rule? | Why? |
+| :--- | :---: | :--- |
+| **Swipe gestures** (Volume Up/Down, Brightness Left/Right) | **No** | Handled directly inside KWin's compositor pipeline using its internal libinput stream. |
+| **Tap gestures** (4-finger Tap for Play/Pause) | **Yes** | KWin does not expose multi-finger tap states to plugin effects. InputActions falls back to reading raw `/dev/input/event*` devices via `libevdev`. Without the `uaccess` udev tag, unprivileged user sessions are denied read permissions to the raw event nodes. |
+
+> [!TIP]
+> If you only plan to use multi-finger swiping and omit tap gestures, you can skip step 4 entirely.
+
 ---
 
 ## Credits & Disclaimers
