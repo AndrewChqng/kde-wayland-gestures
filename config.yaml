@@ -1,0 +1,62 @@
+touchpad:
+  gestures:
+    # 4 fingers UP/DOWN -> Volume
+    - type: swipe
+      fingers: 4
+      direction: up_down
+
+      actions:
+        - on: update
+          interval: -20
+          input:
+            - keyboard: [ volumeup ]
+
+        - on: update
+          interval: 20
+          input:
+            - keyboard: [ volumedown ]
+
+    # 4 fingers LEFT/RIGHT -> Internal Display Brightness only
+    - type: swipe
+      fingers: 4
+      direction: left_right
+
+      actions:
+        - on: update
+          interval: -25
+          wait: true
+          command: >-
+            d=display0;
+            [ "$(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness/$d org.kde.ScreenBrightness.Display IsInternal)" = "b true" ] ||
+            for x in $(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness org.kde.ScreenBrightness DisplaysDBusNames | tr -d '"' | cut -d' ' -f3-); do
+              [ "$(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness/$x org.kde.ScreenBrightness.Display IsInternal)" = "b true" ] && d=$x && break;
+            done;
+            b=$(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness/$d org.kde.ScreenBrightness.Display Brightness);
+            b=$(( ${b#* } - 500 ));
+            [ $b -lt 0 ] && b=0;
+            busctl --user call org.kde.ScreenBrightness /org/kde/ScreenBrightness/$d org.kde.ScreenBrightness.Display SetBrightness iu $b 0
+
+        - on: update
+          interval: 25
+          wait: true
+          command: >-
+            d=display0;
+            [ "$(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness/$d org.kde.ScreenBrightness.Display IsInternal)" = "b true" ] ||
+            for x in $(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness org.kde.ScreenBrightness DisplaysDBusNames | tr -d '"' | cut -d' ' -f3-); do
+              [ "$(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness/$x org.kde.ScreenBrightness.Display IsInternal)" = "b true" ] && d=$x && break;
+            done;
+            b=$(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness/$d org.kde.ScreenBrightness.Display Brightness);
+            m=$(busctl --user get-property org.kde.ScreenBrightness /org/kde/ScreenBrightness/$d org.kde.ScreenBrightness.Display MaxBrightness);
+            m=${m#* };
+            b=$(( ${b#* } + 500 ));
+            [ $b -gt $m ] && b=$m;
+            busctl --user call org.kde.ScreenBrightness /org/kde/ScreenBrightness/$d org.kde.ScreenBrightness.Display SetBrightness iu $b 0
+
+    # 4 fingers TAP -> Play / Pause
+    - type: tap
+      fingers: 4
+
+      actions:
+        - on: begin
+          input:
+            - keyboard: [ playpause ]
